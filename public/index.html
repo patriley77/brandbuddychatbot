@@ -30,7 +30,6 @@
             backdrop-filter: blur(20px);
             box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.5),
                         0px 0px 15px rgba(146, 103, 255, 0.8);
-            animation: pulseGlow 2.5s infinite alternate ease-in-out;
             box-sizing: border-box;
             overflow: hidden;
             position: relative;
@@ -49,12 +48,12 @@
             position: relative;
             scroll-behavior: smooth;
             max-height: 480px;
-            scrollbar-width: none; /* Hide scrollbar for Firefox */
-            -ms-overflow-style: none; /* Hide scrollbar for IE/Edge */
+            scrollbar-width: none;
+            -ms-overflow-style: none;
         }
 
         #chat-box::-webkit-scrollbar {
-            display: none; /* Hide scrollbar for Chrome, Safari */
+            display: none;
         }
 
         .chat-message {
@@ -78,11 +77,11 @@
             background: linear-gradient(45deg, #4A90E2, #0088ff);
             color: white;
             align-self: flex-end;
-            margin-right: 50px; /* Move out more from the right */
-            margin-top: 10px; /* Lower starting position */
+            margin-right: 50px;
+            margin-top: 10px;
         }
 
-        /* Floating Scroll Buttons */
+        /* Scroll Buttons */
         .scroll-btn {
             position: absolute;
             right: 15px;
@@ -114,7 +113,7 @@
         /* Input Box */
         #input-container {
             display: flex;
-            width: calc(100% - 50px); /* Move input box right */
+            width: calc(100% - 50px);
             padding: 10px;
             background: #1E1E2E;
             border-radius: 10px;
@@ -160,45 +159,27 @@
     </div>
 
     <script>
-        const API_KEY = process.env.DEEPSEEK_API_KEY;  // Get from environment
-        const API_URL = "https://api.deepseek.com/chat/completions";
-
+        const API_URL = "/chat";  // Call the backend instead of DeepSeek API
 
         function getCurrentDay() {
             const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
             return days[new Date().getDay()];
         }
 
-        async function fetchCachedDocument() {
-            const response = await fetch("cached_document.txt");
-            return await response.text();
-        }
-
         async function getAIResponse(userMessage) {
-            const documentData = await fetchCachedDocument();
-            const messages = [
-                { role: "system", content: `You are Chad, an AI assistant. Today is ${getCurrentDay()}. Use this document for answers: ${documentData}` },
-                { role: "user", content: userMessage }
-            ];
+            try {
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: userMessage })
+                });
 
-            const response = await fetch(API_URL, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${API_KEY}`
-                },
-                body: JSON.stringify({ model: "deepseek-chat", messages })
-            });
-
-            const data = await response.json();
-            let responseText = data.choices ? data.choices[0].message.content : "Sorry, I couldn't process that.";
-
-            // Summarize long responses
-            if (responseText.length > 400) {
-                responseText = responseText.split('. ').slice(0, 3).join('. ') + "...";
+                const data = await response.json();
+                return data.reply;
+            } catch (error) {
+                console.error("Error:", error);
+                return "Sorry, I couldn't process that.";
             }
-
-            return responseText;
         }
 
         document.getElementById("send-btn").addEventListener("click", sendMessage);
@@ -244,4 +225,3 @@
     </script>
 </body>
 </html>
-
