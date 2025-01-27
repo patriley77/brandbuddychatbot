@@ -160,8 +160,9 @@
     </div>
 
     <script>
-        const API_KEY = "sk-7160ad6181c6444fadb820a577ce3673";
+        const API_KEY = process.env.DEEPSEEK_API_KEY;  // Get from environment
         const API_URL = "https://api.deepseek.com/chat/completions";
+
 
         function getCurrentDay() {
             const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
