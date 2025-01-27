@@ -72,8 +72,9 @@ app.post("/chat", async (req, res) => {
 
 // ✅ API Endpoint for AI-Generated Welcome Message
 app.get("/welcome", async (req, res) => {
-    if (!API_KEY) {
-        return res.status(500).json({ welcomeMessage: "Hey there! I'm Chad, your AI buddy!" });
+    function getCurrentDay() {
+        const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        return days[new Date().getDay()];
     }
 
     try {
@@ -92,7 +93,12 @@ app.get("/welcome", async (req, res) => {
         });
 
         const data = await response.json();
-        const welcomeMessage = data.choices?.[0]?.message?.content || "Hey there! I'm Chad, your AI buddy!";
+        let welcomeMessage = data.choices?.[0]?.message?.content || "Hey there! I'm Chad, your AI buddy!";
+
+        // Replace any placeholder with the actual day
+        const today = getCurrentDay();
+        welcomeMessage = welcomeMessage.replace(/\[Day of the Week\]/g, today);
+
         res.json({ welcomeMessage });
 
     } catch (error) {
