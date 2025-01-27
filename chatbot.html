@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chad the AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #0A0A23, #1A1A40);
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden;
+        }
+
+        /* Floating Chat Box */
+        #chat-container {
+            width: 800px;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-radius: 20px;
+            background: rgba(10, 10, 35, 0.85);
+            backdrop-filter: blur(20px);
+            box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.5),
+                        0px 0px 15px rgba(146, 103, 255, 0.8);
+            animation: pulseGlow 2.5s infinite alternate ease-in-out;
+            box-sizing: border-box;
+            overflow: hidden;
+            position: relative;
+            padding: 15px;
+        }
+
+        /* Chat Box */
+        #chat-box {
+            flex-grow: 1;
+            width: 100%;
+            padding: 20px;
+            background: transparent;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            position: relative;
+            scroll-behavior: smooth;
+            max-height: 480px;
+            scrollbar-width: none; /* Hide scrollbar for Firefox */
+            -ms-overflow-style: none; /* Hide scrollbar for IE/Edge */
+        }
+
+        #chat-box::-webkit-scrollbar {
+            display: none; /* Hide scrollbar for Chrome, Safari */
+        }
+
+        .chat-message {
+            padding: 12px 18px;
+            margin: 8px 0;
+            border-radius: 20px;
+            font-size: 16px;
+            display: inline-block;
+            animation: fadeIn 0.5s ease-in-out;
+            max-width: 60%;
+            word-wrap: break-word;
+        }
+
+        .bot-message {
+            background: linear-gradient(45deg, #FFD700, #FFB900);
+            color: black;
+            align-self: flex-start;
+        }
+
+        .user-message {
+            background: linear-gradient(45deg, #4A90E2, #0088ff);
+            color: white;
+            align-self: flex-end;
+            margin-right: 50px; /* Move out more from the right */
+            margin-top: 10px; /* Lower starting position */
+        }
+
+        /* Floating Scroll Buttons */
+        .scroll-btn {
+            position: absolute;
+            right: 15px;
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s ease-in-out;
+            z-index: 10;
+        }
+
+        .scroll-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(1.1);
+        }
+
+        #scroll-up {
+            top: 12px;
+        }
+
+        #scroll-down {
+            bottom: 100px;
+        }
+
+        /* Input Box */
+        #input-container {
+            display: flex;
+            width: calc(100% - 50px); /* Move input box right */
+            padding: 10px;
+            background: #1E1E2E;
+            border-radius: 10px;
+            box-sizing: border-box;
+            margin: auto 25px 10px 25px;
+        }
+
+        #user-input {
+            flex-grow: 1;
+            padding: 14px;
+            font-size: 18px;
+            color: white;
+            background: transparent;
+            border: none;
+            outline: none;
+            caret-color: white;
+        }
+
+        #send-btn {
+            width: 100px;
+            font-size: 18px;
+            padding: 12px;
+            background: linear-gradient(45deg, #4A90E2, #0088ff);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 10px;
+            margin-left: 8px;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="scroll-up" class="scroll-btn">🔼</div>
+        <div id="chat-box"></div>
+        <div id="scroll-down" class="scroll-btn">🔽</div>
+        <div id="input-container">
+            <input type="text" id="user-input" placeholder="Type your message...">
+            <button id="send-btn">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = "sk-7160ad6181c6444fadb820a577ce3673";
+        const API_URL = "https://api.deepseek.com/chat/completions";
+
+        function getCurrentDay() {
+            const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+            return days[new Date().getDay()];
+        }
+
+        async function fetchCachedDocument() {
+            const response = await fetch("cached_document.txt");
+            return await response.text();
+        }
+
+        async function getAIResponse(userMessage) {
+            const documentData = await fetchCachedDocument();
+            const messages = [
+                { role: "system", content: `You are Chad, an AI assistant. Today is ${getCurrentDay()}. Use this document for answers: ${documentData}` },
+                { role: "user", content: userMessage }
+            ];
+
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${API_KEY}`
+                },
+                body: JSON.stringify({ model: "deepseek-chat", messages })
+            });
+
+            const data = await response.json();
+            let responseText = data.choices ? data.choices[0].message.content : "Sorry, I couldn't process that.";
+
+            // Summarize long responses
+            if (responseText.length > 400) {
+                responseText = responseText.split('. ').slice(0, 3).join('. ') + "...";
+            }
+
+            return responseText;
+        }
+
+        document.getElementById("send-btn").addEventListener("click", sendMessage);
+        document.getElementById("user-input").addEventListener("keypress", function(event) {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+
+        async function sendMessage() {
+            const userInput = document.getElementById("user-input");
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            addMessage("You", message, false);
+            userInput.value = "";
+
+            const response = await getAIResponse(message);
+            addMessage("Chad", response, true);
+
+            autoScroll();
+        }
+
+        function addMessage(sender, message, isBot) {
+            const chatBox = document.getElementById("chat-box");
+            const msgElement = document.createElement("div");
+            msgElement.classList.add("chat-message", isBot ? "bot-message" : "user-message");
+            msgElement.innerHTML = `<strong>${sender}:</strong> ${message}`;
+            chatBox.appendChild(msgElement);
+            autoScroll();
+        }
+
+        function autoScroll() {
+            const chatBox = document.getElementById("chat-box");
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        setTimeout(() => {
+            addMessage("Chad", `🔥 Happy ${getCurrentDay()}! How's your day going? Let's chat!`, true);
+            autoScroll();
+        }, 500);
+    </script>
+</body>
+</html>
+
