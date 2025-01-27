@@ -145,6 +145,26 @@
             margin-left: 8px;
         }
 
+        /* 🔥 MOBILE RESPONSIVENESS */
+        @media (max-width: 768px) {
+            #chat-container {
+                width: 90vw; /* Make it 90% of the screen width */
+                height: 85vh; /* Use most of the screen height */
+            }
+
+            .chat-message {
+                font-size: 14px; /* Make text more readable */
+            }
+
+            #user-input {
+                font-size: 16px; /* Increase input text size */
+            }
+
+            #send-btn {
+                width: 80px; /* Adjust send button size */
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -161,11 +181,6 @@
     <script>
         const API_URL = "/chat";  // Call the backend instead of DeepSeek API
 
-        function getCurrentDay() {
-            const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-            return days[new Date().getDay()];
-        }
-
         async function getAIResponse(userMessage) {
             try {
                 const response = await fetch(API_URL, {
@@ -181,6 +196,22 @@
                 return "Sorry, I couldn't process that.";
             }
         }
+
+        async function getWelcomeMessage() {
+            try {
+                const response = await fetch("/welcome");
+                const data = await response.json();
+                addMessage("Chad", data.welcomeMessage, true);
+            } catch (error) {
+                console.error("Error fetching welcome message:", error);
+                addMessage("Chad", "Hey there! I'm Chad, your AI buddy!", true);
+            }
+        }
+
+        window.onload = () => {
+            getWelcomeMessage();
+            autoScroll();
+        };
 
         document.getElementById("send-btn").addEventListener("click", sendMessage);
         document.getElementById("user-input").addEventListener("keypress", function(event) {
@@ -217,11 +248,6 @@
             const chatBox = document.getElementById("chat-box");
             chatBox.scrollTop = chatBox.scrollHeight;
         }
-
-        setTimeout(() => {
-            addMessage("Chad", `🔥 Happy ${getCurrentDay()}! How's your day going? Let's chat!`, true);
-            autoScroll();
-        }, 500);
     </script>
 </body>
 </html>

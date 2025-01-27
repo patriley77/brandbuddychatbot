@@ -3,7 +3,9 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const path = require("path");
 const fs = require("fs");
-const fetch = require("node-fetch");
+
+// Check Node.js version for fetch compatibility
+const fetch = global.fetch || require("node-fetch");
 
 dotenv.config(); // Load environment variables
 
@@ -17,20 +19,30 @@ app.use(cors());
 const API_URL = "https://api.deepseek.com/chat/completions";
 const API_KEY = process.env.DEEPSEEK_API_KEY;
 
-// Function to read cached document
+// ✅ Function to read cached document
 function getCachedDocument() {
     try {
         return fs.readFileSync("cached_document.txt", "utf8");
     } catch (error) {
         console.error("Error reading cached document:", error);
-        return "";
+        return "No additional context available.";
     }
 }
 
-// API Endpoint for Chatbot Requests
+// ✅ API Endpoint for Chatbot Requests
 app.post("/chat", async (req, res) => {
     const { message } = req.body;
-    const cachedDoc = getCachedDocument(); // Load cached document
+
+    if (!message) {
+        return res.status(400).json({ reply: "Error: No message provided." });
+    }
+
+    if (!API_KEY) {
+        console.error("Missing API Key");
+        return res.status(500).json({ reply: "Error: Missing API key. AI service unavailable." });
+    }
+
+    const cachedDoc = getCachedDocument();
 
     try {
         const response = await fetch(API_URL, {
@@ -49,7 +61,8 @@ app.post("/chat", async (req, res) => {
         });
 
         const data = await response.json();
-        res.json({ reply: data.choices[0].message.content });
+        const reply = data.choices?.[0]?.message?.content || "I'm not sure how to respond to that.";
+        res.json({ reply });
 
     } catch (error) {
         console.error("Error fetching AI response:", error);
@@ -57,11 +70,43 @@ app.post("/chat", async (req, res) => {
     }
 });
 
-// Serve static frontend files
+// ✅ API Endpoint for AI-Generated Welcome Message
+app.get("/welcome", async (req, res) => {
+    if (!API_KEY) {
+        return res.status(500).json({ welcomeMessage: "Hey there! I'm Chad, your AI buddy!" });
+    }
+
+    try {
+        const response = await fetch(API_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${API_KEY}`
+            },
+            body: JSON.stringify({
+                model: "deepseek-chat",
+                messages: [
+                    { role: "system", content: "Generate a fun, friendly, and engaging chatbot welcome message. It should reference today's day of the week and encourage users to chat." }
+                ]
+            })
+        });
+
+        const data = await response.json();
+        const welcomeMessage = data.choices?.[0]?.message?.content || "Hey there! I'm Chad, your AI buddy!";
+        res.json({ welcomeMessage });
+
+    } catch (error) {
+        console.error("Error fetching AI welcome message:", error);
+        res.status(500).json({ welcomeMessage: "Hey there! I'm Chad, your AI buddy!" });
+    }
+});
+
+// ✅ Serve static frontend files
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
+// ✅ Start server
 app.listen(PORT, () => console.log(`✅ Server running at http://localhost:${PORT}`));
