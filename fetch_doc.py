@@ -1,10 +1,10 @@
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
-import time
+import os
 
-# Path to your service account JSON file
-SERVICE_ACCOUNT_FILE = r"C:\brandbuddychat\brand-buddy-ai-cloud.json"
-DOCUMENT_ID = "1_ZV5esmaJ8V6OzSd6QCFanMkK9mVyoND0QYjUkDNH4A"
+# Load environment variables
+SERVICE_ACCOUNT_FILE = os.getenv("GOOGLE_CREDENTIALS_JSON_PATH", "brand-buddy-ai-cloud.json")
+DOCUMENT_ID = os.getenv("GOOGLE_DOC_ID", "1_ZV5esmaJ8V6OzSd6QCFanMkK9mVyoND0QYjUkDNH4A")
 CACHE_FILE = "cached_document.txt"
 
 # Authenticate using service account
@@ -31,10 +31,6 @@ def fetch_document():
     
     print("[INFO] Document content updated.")
 
-# Run once when script starts
-fetch_document()
-
-# Schedule to run every hour
-while True:
-    time.sleep(3600)  # 1 hour
+# Run once when triggered
+if __name__ == "__main__":
     fetch_document()
